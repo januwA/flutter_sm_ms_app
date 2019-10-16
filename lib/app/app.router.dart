@@ -1,24 +1,23 @@
 import 'package:flutter_ajanuw_router/ajanuw_route.dart';
 import 'package:flutter_ajanuw_router/flutter_ajanuw_router.dart';
 
+import 'auth_module/auth.guard.dart';
 import 'pages/dash/dash.dart';
 import 'pages/not-found/not-found.dart';
 
 AjanuwRouter router = AjanuwRouter();
 
-final List<AjanuwRoute> routes = [
+List<AjanuwRoute> appRoutes = [
   AjanuwRoute(
-    path: '',
-    children: [
-      AjanuwRoute(
-        path: "",
-        redirectTo: "dash",
-      ),
-      AjanuwRoute(
-        path: "dash",
-        builder: (context, r) => Dash(),
-      ),
+    path: "",
+    redirectTo: "dash",
+  ),
+  AjanuwRoute(
+    path: "dash",
+    canActivate: [
+      authGuard,
     ],
+    builder: (context, r) => Dash(),
   ),
   AjanuwRoute(
     path: "not-found",
@@ -29,5 +28,3 @@ final List<AjanuwRoute> routes = [
     redirectTo: '/not-found',
   ),
 ];
-
-var onGenerateRoute = router.forRoot(routes);
