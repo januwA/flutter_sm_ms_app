@@ -4,6 +4,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:sm_ms/app/auth_module/pages/login/login.dart';
 import 'package:sm_ms/app/pages/dash/dash.dart';
 import 'package:sm_ms/store/main/main.store.dart';
+import 'package:sm_ms/theme/theme.dart';
 
 import 'app.router.dart';
 import 'auth_module/auth.router.dart';
@@ -19,6 +20,8 @@ class MyApp extends StatelessWidget {
       builder: (_) {
         return MaterialApp(
           // initialRoute: mainStore.tokenService.hasToken ? "/dash" : '/login',
+          title: 'SM.MS',
+          theme: myTheme,
           navigatorObservers: [router.navigatorObserver],
           navigatorKey: router.navigatorKey,
           onGenerateRoute: _onGenerateRoute,

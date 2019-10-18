@@ -69,7 +69,6 @@ class _HomeState extends State<Home> {
         childAspectRatio: 0.7,
         mainAxisSpacing: 4.0,
         crossAxisSpacing: 4.0,
-        cacheExtent: 40,
         children: <Widget>[
           for (var image in images) _imageItem(image),
         ],
@@ -96,6 +95,22 @@ class _HomeState extends State<Home> {
               child: Image.network(
                 image.url,
                 fit: BoxFit.cover,
+                frameBuilder: (
+                  BuildContext context,
+                  Widget child,
+                  int frame,
+                  bool wasSynchronouslyLoaded,
+                ) {
+                  if (wasSynchronouslyLoaded) {
+                    return child;
+                  }
+                  return AnimatedOpacity(
+                    child: child,
+                    opacity: frame == null ? 0 : 1,
+                    duration: const Duration(seconds: 1),
+                    curve: Curves.easeOut,
+                  );
+                },
               ),
             ),
           ),
@@ -126,16 +141,18 @@ class _HomeState extends State<Home> {
                       setState(() {});
                     }
                   } else {
-                    Toast.show("删除失败.", context,
+                    Toast.show("删除失败", context,
                         duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
                   }
                 },
               ),
               FlatButton(
                 child: const Text('复制'),
-                onPressed: () {
+                onPressed: () async {
                   /* 将image.url写入粘贴板  */
-                  Clipboard.setData(ClipboardData(text: image.url));
+                  await Clipboard.setData(ClipboardData(text: image.url));
+                  Toast.show("复制完成", context,
+                      duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
                 },
               ),
             ],

@@ -21,14 +21,15 @@ List<AjanuwRoute> appRoutes = [
     builder: (context, r) => Dash(),
   ),
   AjanuwRoute(
-      path: 'full-screen-image',
-      builder: (c, r) {
-        Map arg = r.arguments;
-        return FullScreenImage(
-          images: arg['images'],
-          index: arg['index'],
-        );
-      }),
+    path: 'full-screen-image',
+    builder: (c, r) {
+      Map arg = r.arguments;
+      return FullScreenImage(
+        images: arg['images'],
+        index: arg['index'],
+      );
+    },
+  ),
   AjanuwRoute(
     path: "not-found",
     builder: (context, r) => NotFound(),
