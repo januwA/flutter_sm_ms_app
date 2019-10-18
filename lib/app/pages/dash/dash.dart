@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:sm_ms/app/pages/home/home.dart';
 import 'package:sm_ms/app/pages/mine/mine.dart';
 import 'package:sm_ms/app/pages/upload/upload.dart';
-import 'package:sm_ms/store/main/main.store.dart';
 
 class Dash extends StatefulWidget {
   @override
@@ -21,7 +20,6 @@ class _DashState extends State<Dash> {
 
   @override
   Widget build(BuildContext context) {
-    assert(mainStore.authService.isLoggedIn);
     return Scaffold(
       body: PageView(
         controller: _controller,

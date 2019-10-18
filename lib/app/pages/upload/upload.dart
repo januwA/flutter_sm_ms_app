@@ -6,7 +6,7 @@ import 'package:path/path.dart';
 import 'package:async/async.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-import 'package:sm_ms/store/main/main.store.dart';
+import 'package:sm_ms/app/shared_module/client/client.dart';
 import 'package:toast/toast.dart';
 
 class Upload extends StatefulWidget {
@@ -16,7 +16,6 @@ class Upload extends StatefulWidget {
 
 class _UploadState extends State<Upload> {
   File imageFile;
-  final Uri uploadUri = Uri.parse("https://sm.ms/api/v2/upload");
 
   @override
   Widget build(BuildContext context) {
@@ -52,21 +51,14 @@ class _UploadState extends State<Upload> {
       DelegatingStream.typed(imageFile.openRead()),
     );
     int length = await imageFile.length();
-    http.MultipartRequest request = http.MultipartRequest("POST", uploadUri);
-    var multipartFile = http.MultipartFile(
-      'smfile',
-      stream,
-      length,
-      filename: basename(imageFile.path),
-    );
-    request.files.add(multipartFile);
-    request.headers['Authorization'] =
-        mainStore.tokenService.getAuthorizationToken();
+    String filename = basename(imageFile.path);
+    var multipartFile =
+        http.MultipartFile('smfile', stream, length, filename: filename);
     _showDialog(context);
-    var r = await request.send();
+    var r = await client.postFile('upload', files: [multipartFile]);
     Navigator.of(context).pop();
     if (r.statusCode == HttpStatus.ok) {
-      var body = jsonDecode(await r.stream.bytesToString());
+      var body = jsonDecode(r.body);
       if (body['success']) {
         Toast.show("上传成功: " + body['message'], context,
             duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
