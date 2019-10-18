@@ -7,9 +7,11 @@ class BaseUrlInterceptor implements InterceptorContract {
 
   @override
   Future<RequestData> interceptRequest({RequestData data}) async {
-    if (p.isRelative(data.url)) {
-      data.url = p.normalize(p.join(baseUrl.toString(), data.url));
+    String url = data.url.toString();
+    if (p.isRelative(url)) {
+      url = p.normalize(p.join(baseUrl, url));
     }
+    data.url = Uri.parse(url);
     return data;
   }
 

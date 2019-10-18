@@ -37,7 +37,7 @@ abstract class _TokenService with Store {
   @action
   Future<String> getToken() async {
     prefs ??= await SharedPreferences.getInstance();
-    return prefs.getString(_tokenKey);
+    return prefs.getString(_tokenKey) ?? '';
   }
 
   @action

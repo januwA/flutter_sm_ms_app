@@ -1,4 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:sm_ms/app/dto/history_images/history_images.dto.dart';
+import 'package:sm_ms/app/shared_module/client/client.dart';
+import 'package:http/http.dart' as http;
+import 'package:sm_ms/app/shared_module/pipes/image_size.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -6,14 +12,105 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  Future<http.Response> images;
+  ScrollController controller = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+      images = client.get('upload_history');
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Home'),
       ),
-      body: Center(
-        child: Text('Home work.'),
+      body: FutureBuilder(
+        future: images,
+        builder: (context, AsyncSnapshot<http.Response> snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          if (snap.connectionState == ConnectionState.done) {
+            var r = snap.data;
+            if (r.statusCode == HttpStatus.ok) {
+              var body = HistoryImagesDto.fromJson(r.body);
+              if (body.success) {
+                return _historyImages(body.data.toList());
+              } else {
+                return Center(
+                  child: Text(body.message),
+                );
+              }
+            } else {
+              return Center(
+                child: Text('Error: ${snap.error}'),
+              );
+            }
+          }
+          return SizedBox();
+        },
+      ),
+    );
+  }
+
+  /// 展示所有历史上传的图片
+  Widget _historyImages(List<DataDto> images) {
+    return GridView.count(
+      controller: controller,
+      crossAxisCount: 2,
+      childAspectRatio: 0.7,
+      mainAxisSpacing: 4.0,
+      crossAxisSpacing: 4.0,
+      cacheExtent: 40,
+      children: <Widget>[
+        for (var image in images) _imageItem(image),
+      ],
+    );
+  }
+
+  Widget _imageItem(DataDto image) {
+    return Card(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Expanded(
+            child: Image.network(
+              image.url,
+              fit: BoxFit.cover,
+            ),
+          ),
+          ListTile(
+            dense: true,
+            title: Text(
+              image.filename,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+            subtitle: Text(imageSize(image.size)),
+          ),
+          ButtonBar(
+            mainAxisSize: MainAxisSize.min,
+            alignment: MainAxisAlignment.spaceAround,
+            children: <Widget>[
+              FlatButton(
+                child: const Text('删除'),
+                onPressed: () {/* send delete event. */},
+              ),
+              FlatButton(
+                child: const Text('复制'),
+                onPressed: () {/* 将image.url写入粘贴板  */},
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
