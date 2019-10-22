@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:sm_ms/app/dto/userinfo/user_info_dto.dart';
 import 'package:sm_ms/app/shared_module/client/client.dart';
 import 'package:http/http.dart' as http;
+import 'package:sm_ms/store/main/main.store.dart';
 
 class Mine extends StatefulWidget {
   @override
@@ -41,6 +42,14 @@ class _MineState extends State<Mine> {
                         ListTile(
                           title: Text("总磁盘: " + body.data.diskLimit),
                           subtitle: Text('已使用: ' + body.data.diskUsage),
+                        ),
+                        ButtonBar(
+                          children: <Widget>[
+                            FlatButton(
+                              child: const Text('退出登录'),
+                              onPressed: mainStore.authService.logout,
+                            ),
+                          ],
                         ),
                       ],
                     ),

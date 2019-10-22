@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sm_ms/store/main/main.store.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -19,8 +20,18 @@ class _LoginState extends State<Login> {
     super.dispose();
   }
 
+  Future<void> _launchURL() async {
+    const url = 'https://sm.ms/register';
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    var theme = Theme.of(context);
     return Scaffold(
       body: Center(
         child: Padding(
@@ -47,10 +58,27 @@ class _LoginState extends State<Login> {
                     return v.trim().isNotEmpty ? null : "不能为空";
                   },
                 ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Material(
+                      child: InkWell(
+                        onTap: _launchURL,
+                        child: Text(
+                          '注册账号?',
+                          style: theme.textTheme.caption.copyWith(
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
                 RaisedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (_formKey.currentState.validate()) {
-                      mainStore.authService.login(
+                      mainStore.authService.login(context,
                           _unameController.text, _passwordController.text);
                     }
                   },

@@ -1,9 +1,11 @@
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:mobx/mobx.dart';
 import 'package:sm_ms/app/app.router.dart';
 import 'package:sm_ms/app/auth_module/dto/login/login_dto.dart';
 import 'package:sm_ms/app/shared_module/client/client.dart';
+import 'package:sm_ms/app/shared_module/widgets/http_loading_dialog.dart';
 import 'package:sm_ms/store/main/main.store.dart';
 
 part 'auth.service.g.dart';
@@ -31,7 +33,9 @@ abstract class _AuthService with Store {
 
   /// 登陆成功，储存token，重定向到 /
   @action
-  Future<void> login(String username, String password) async {
+  Future<void> login(
+      BuildContext context, String username, String password) async {
+    showHttpLoadingDialog(context, '登陆中...');
     var r = await client.post(
       'token',
       body: {
@@ -39,6 +43,7 @@ abstract class _AuthService with Store {
         "password": password,
       },
     );
+    Navigator.of(context).pop();
 
     if (r.statusCode == HttpStatus.ok) {
       LoginDto body = LoginDto.fromJson(r.body);
@@ -63,14 +68,5 @@ abstract class _AuthService with Store {
     isLoggedIn = false;
     await mainStore.tokenService.clearToken();
     router.navigator.pushNamedAndRemoveUntil('/login', (_) => false);
-  }
-
-  /// 获取用户的信息
-  getUserInfo() async {
-    // return this.http
-    //   .post<UserProfile>(profileUrl, null, {
-    //     observe: 'response',
-    //   })
-    //   .toPromise();
   }
 }

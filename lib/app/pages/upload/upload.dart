@@ -7,6 +7,7 @@ import 'package:async/async.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:sm_ms/app/shared_module/client/client.dart';
+import 'package:sm_ms/app/shared_module/widgets/http_loading_dialog.dart';
 import 'package:toast/toast.dart';
 
 class Upload extends StatefulWidget {
@@ -54,7 +55,7 @@ class _UploadState extends State<Upload> {
     String filename = basename(imageFile.path);
     var multipartFile =
         http.MultipartFile('smfile', stream, length, filename: filename);
-    _showDialog(context);
+    showHttpLoadingDialog(context, '上传中...');
     var r = await client.postFile('upload', files: [multipartFile]);
     Navigator.of(context).pop();
     if (r.statusCode == HttpStatus.ok) {
@@ -67,28 +68,5 @@ class _UploadState extends State<Upload> {
             duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
       }
     }
-  }
-
-  _showDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return SimpleDialog(
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  CircularProgressIndicator(),
-                  SizedBox(width: 12),
-                  Text('上传中...'),
-                ],
-              ),
-            ),
-          ],
-        );
-      },
-    );
   }
 }
