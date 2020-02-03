@@ -6,7 +6,7 @@ import 'auth_module/auth.guard.dart';
 import 'pages/dash/dash.dart';
 import 'pages/not-found/not-found.dart';
 
-AjanuwRouter router = AjanuwRouter();
+AjanuwRouter router = AjanuwRouter(printHistory: true);
 
 List<AjanuwRoute> appRoutes = [
   AjanuwRoute(

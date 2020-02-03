@@ -1,6 +1,6 @@
 name: sm_ms
 description: Graph bed from [https://sm.ms/]
-version: 0.2.0
+version: 0.3.0
 
 environment:
   sdk: '>=2.2.2 <3.0.0'
@@ -9,7 +9,8 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^0.1.2
-  flutter_ajanuw_router: ^0.2.1
+  flutter_ajanuw_router: ^0.3.1
+  flutter_imagenetwork: ^0.3.2
   http_interceptor:
     git:
       url: https://github.com/januwA/http_interceptor.git

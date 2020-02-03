@@ -4,7 +4,7 @@ import 'package:sm_ms/store/main/main.store.dart';
 import '../app.router.dart';
 
 final CanActivate authGuard = (r) {
-  if (mainStore.authService.isLoggedIn) {
+  if (mainStore.authService.logged) {
     return true;
   }
 

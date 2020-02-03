@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_imagenetwork/flutter_imagenetwork.dart';
 import 'package:sm_ms/app/dto/history_images/history_images.dto.dart';
 
 class FullScreenImage extends StatefulWidget {
@@ -34,9 +35,12 @@ class _FullScreenImageState extends State<FullScreenImage> {
         itemCount: widget.images.length,
         itemBuilder: (context, int index) {
           var image = widget.images[index];
-          return Image.network(
-            image.url,
+          return AjanuwImage(
+            image: AjanuwNetworkImage(image.url),
             fit: BoxFit.contain,
+            loadingWidget: AjanuwImage.defaultLoadingWidget,
+            loadingBuilder: AjanuwImage.defaultLoadingBuilder,
+            errorBuilder: AjanuwImage.defaultErrorBuilder,
           );
         },
         onPageChanged: (int index) {

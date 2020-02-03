@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_imagenetwork/flutter_imagenetwork.dart';
 import 'package:sm_ms/app/app.router.dart';
 import 'package:sm_ms/app/dto/delete_image/delete_image_dto.dart';
 import 'package:sm_ms/app/dto/history_images/history_images.dto.dart';
@@ -19,6 +20,14 @@ class _HomeState extends State<Home> {
   ScrollController controller = ScrollController();
   List<DataDto> images;
 
+  Widget loadingWidget = Center(child: CircularProgressIndicator());
+
+  @override
+  void dispose() {
+    super.dispose();
+    controller.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,9 +35,7 @@ class _HomeState extends State<Home> {
         future: client.get('upload_history'),
         builder: (context, AsyncSnapshot<http.Response> snap) {
           if (snap.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: CircularProgressIndicator(),
-            );
+            return loadingWidget;
           }
 
           if (snap.connectionState == ConnectionState.done) {
@@ -39,14 +46,10 @@ class _HomeState extends State<Home> {
                 images = body.data.toList().reversed.toList();
                 return _historyImages(images);
               } else {
-                return Center(
-                  child: Text(body.message),
-                );
+                return Center(child: Text(body.message));
               }
             } else {
-              return Center(
-                child: Text('Error: ${snap.error}'),
-              );
+              return Center(child: Text('Error: ${snap.error}'));
             }
           }
           return SizedBox();
@@ -92,25 +95,12 @@ class _HomeState extends State<Home> {
                   },
                 );
               },
-              child: Image.network(
-                image.url,
+              child: AjanuwImage(
+                image: AjanuwNetworkImage(image.url),
                 fit: BoxFit.cover,
-                frameBuilder: (
-                  BuildContext context,
-                  Widget child,
-                  int frame,
-                  bool wasSynchronouslyLoaded,
-                ) {
-                  if (wasSynchronouslyLoaded) {
-                    return child;
-                  }
-                  return AnimatedOpacity(
-                    child: child,
-                    opacity: frame == null ? 0 : 1,
-                    duration: const Duration(seconds: 1),
-                    curve: Curves.easeOut,
-                  );
-                },
+                loadingWidget: AjanuwImage.defaultLoadingWidget,
+                loadingBuilder: AjanuwImage.defaultLoadingBuilder,
+                errorBuilder: AjanuwImage.defaultErrorBuilder,
               ),
             ),
           ),

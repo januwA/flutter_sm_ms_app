@@ -1,12 +1,12 @@
-import 'dart:io';
+import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:mobx/mobx.dart';
 import 'package:sm_ms/app/app.router.dart';
 import 'package:sm_ms/app/auth_module/dto/login/login_dto.dart';
 import 'package:sm_ms/app/shared_module/client/client.dart';
-import 'package:sm_ms/app/shared_module/widgets/http_loading_dialog.dart';
 import 'package:sm_ms/store/main/main.store.dart';
+
+import '../app.router.dart';
 
 part 'auth.service.g.dart';
 
@@ -22,51 +22,49 @@ abstract class _AuthService with Store {
 
   @action
   _init() async {
-    isLoggedIn = (await _root.tokenService.getToken()).isNotEmpty;
+    logged = (await _root.tokenService.getToken()).isNotEmpty;
   }
 
   @observable
-  bool isLoggedIn = false;
+  bool logged = false;
 
   @observable
   String redirectUrl = '/';
 
   /// 登陆成功，储存token，重定向到 /
   @action
-  Future<void> login(
-      BuildContext context, String username, String password) async {
-    showHttpLoadingDialog(context, '登陆中...');
-    var r = await client.post(
-      'token',
-      body: {
-        "username": username,
-        "password": password,
-      },
-    );
-    Navigator.of(context).pop();
-
-    if (r.statusCode == HttpStatus.ok) {
-      LoginDto body = LoginDto.fromJson(r.body);
-      if (body.success) {
-        String _token = body.data.token;
-        await mainStore.tokenService.setToken(_token);
-        isLoggedIn = true;
-        router.navigator.pushNamedAndRemoveUntil(redirectUrl, (_) => false);
+  Future<void> login(String username, String password) async {
+    try {
+      var r = await client.post(
+        'token',
+        body: {
+          "username": username,
+          "password": password,
+        },
+      );
+      if (r.statusCode == 200) {
+        final bodyMap = jsonDecode(r.body);
+        if (bodyMap["success"]) {
+          LoginDto body = LoginDto.fromJson(r.body);
+          String _token = body.data.token;
+          await mainStore.tokenService.setToken(_token);
+          logged = true;
+        } else {
+          throw "Login Error: statusCode: ${r.statusCode} ${r.body}";
+        }
       } else {
-        print('登陆失败:');
-        print(r.body);
+        throw "Login Error: statusCode: ${r.statusCode} ${r.body}";
       }
-    } else {
-      print('登陆失败:');
-      print(r.body);
+    } catch (e) {
+      return Future.error(e);
     }
   }
 
   /// 退出登陆，清理token, 重定向到/login
   @action
   Future<void> logout() async {
-    isLoggedIn = false;
+    logged = false;
     await mainStore.tokenService.clearToken();
-    router.navigator.pushNamedAndRemoveUntil('/login', (_) => false);
+    router.pushNamedAndRemoveUntil('/login', (_) => false);
   }
 }
