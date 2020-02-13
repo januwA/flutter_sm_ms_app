@@ -1,12 +1,15 @@
 import 'package:http_interceptor/http_interceptor.dart';
-import 'package:sm_ms/store/main/main.store.dart';
+
+import '../../../main.dart';
+import '../../auth_module/auth.service.dart';
 
 class AuthorizationInterceptor implements InterceptorContract {
+  final authService = getIt<AuthService>();
   @override
   Future<RequestData> interceptRequest({RequestData data}) async {
     try {
-      if (mainStore.tokenService.hasToken) {
-        data.headers['Authorization'] = mainStore.tokenService.getAuthorizationToken();
+      if (authService.hasToken) {
+        data.headers['Authorization'] = authService.getAuthorizationToken();
       }
     } catch (e) {
       print(e);

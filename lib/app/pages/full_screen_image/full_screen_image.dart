@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_imagenetwork/flutter_imagenetwork.dart';
-import 'package:sm_ms/app/dto/history_images/history_images.dto.dart';
+import 'package:sm_ms/app/shared_module/service/images.service.dart';
+
+import '../../../main.dart';
 
 class FullScreenImage extends StatefulWidget {
-  final List<DataDto> images;
   final int index;
 
-  const FullScreenImage({Key key, @required this.images, this.index = 0})
-      : super(key: key);
+  const FullScreenImage({Key key, this.index = 0}) : super(key: key);
   @override
   _FullScreenImageState createState() => _FullScreenImageState();
 }
 
 class _FullScreenImageState extends State<FullScreenImage> {
+  final imagesService = getIt<ImagesService>();
   PageController controller;
   int page = 0;
-  DataDto get image => widget.images[page];
 
   @override
   void initState() {
@@ -28,13 +28,13 @@ class _FullScreenImageState extends State<FullScreenImage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(image.filename),
+        title: Text(imagesService.images[page].filename),
       ),
       body: PageView.builder(
         controller: controller,
-        itemCount: widget.images.length,
+        itemCount: imagesService.images.length,
         itemBuilder: (context, int index) {
-          var image = widget.images[index];
+          var image = imagesService.images[index];
           return AjanuwImage(
             image: AjanuwNetworkImage(image.url),
             fit: BoxFit.contain,

@@ -1,15 +1,16 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_imagenetwork/flutter_imagenetwork.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobx/mobx.dart';
 import 'package:sm_ms/app/app.router.dart';
-import 'package:sm_ms/app/dto/delete_image/delete_image_dto.dart';
 import 'package:sm_ms/app/dto/history_images/history_images.dto.dart';
-import 'package:sm_ms/app/shared_module/client/client.dart';
-import 'package:http/http.dart' as http;
 import 'package:sm_ms/app/shared_module/pipes/image_size.dart';
+import 'package:sm_ms/app/shared_module/service/images.service.dart';
+import 'package:sm_ms/app/shared_module/widgets/delete_image_dialog.dart';
 import 'package:toast/toast.dart';
+
+import '../../../main.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -18,9 +19,14 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   ScrollController controller = ScrollController();
-  List<DataDto> images;
-
+  final imagesService = getIt<ImagesService>();
   Widget loadingWidget = Center(child: CircularProgressIndicator());
+
+  @override
+  void initState() {
+    super.initState();
+    imagesService.init();
+  }
 
   @override
   void dispose() {
@@ -31,42 +37,32 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FutureBuilder(
-        future: client.get('upload_history'),
-        builder: (context, AsyncSnapshot<http.Response> snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
+      body: Observer(
+        builder: (_) {
+          if (imagesService.loading) {
             return loadingWidget;
           }
 
-          if (snap.connectionState == ConnectionState.done) {
-            var r = snap.data;
-            if (r.statusCode == HttpStatus.ok) {
-              var body = HistoryImagesDto.fromJson(r.body);
-              if (body.success) {
-                images = body.data.toList().reversed.toList();
-                return _historyImages(images);
-              } else {
-                return Center(child: Text(body.message));
-              }
-            } else {
-              return Center(child: Text('Error: ${snap.error}'));
-            }
+          if (imagesService.error != null) {
+            return Center(child: Text('Error: ${imagesService.error}'));
           }
-          return SizedBox();
+          return _historyImages(imagesService.images);
         },
       ),
     );
   }
 
   /// 展示所有历史上传的图片
-  Widget _historyImages(List<DataDto> images) {
+  Widget _historyImages(ObservableList<DataDto> images) {
     return RefreshIndicator(
       onRefresh: () async {
         // 下拉刷新
-        setState(() {});
+        imagesService.update();
+        await imagesService.init();
         return true;
       },
       child: GridView.count(
+        key: PageStorageKey('images'),
         controller: controller,
         crossAxisCount: 2,
         childAspectRatio: 0.7,
@@ -81,6 +77,7 @@ class _HomeState extends State<Home> {
 
   Widget _imageItem(DataDto image) {
     return Card(
+      key: ValueKey(image.hash),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
@@ -89,10 +86,7 @@ class _HomeState extends State<Home> {
               onTap: () {
                 router.navigator.pushNamed(
                   '/full-screen-image',
-                  arguments: {
-                    "images": images,
-                    "index": images.indexOf(image),
-                  },
+                  arguments: imagesService.images.indexOf(image),
                 );
               },
               child: AjanuwImage(
@@ -120,19 +114,23 @@ class _HomeState extends State<Home> {
               FlatButton(
                 child: const Text('删除'),
                 onPressed: () async {
-                  /* send delete event. */
-                  var url = Uri.parse('delete/${image.hash}');
-                  var r = await client.get(url);
-                  if (r.statusCode == HttpStatus.ok) {
-                    var body = DeleteImageDto.fromJson(r.body);
-                    Toast.show(body.message, context,
-                        duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
-                    if (body.success) {
-                      setState(() {});
-                    }
-                  } else {
-                    Toast.show("删除失败", context,
-                        duration: Toast.LENGTH_SHORT, gravity: Toast.BOTTOM);
+                  bool next = await showDeleteImageDiaLog<bool>(
+                    context: context,
+                    child: DeleteImageDiaLog(
+                      onCancel: () => Navigator.of(context).pop(null),
+                      onDelete: () => Navigator.of(context).pop(true),
+                    ),
+                  );
+
+                  if (next == null) return;
+
+                  try {
+                    var r = await imagesService.remove(image);
+                    Toast.show(r.toString(), context,
+                        duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
+                  } catch (e) {
+                    Toast.show(e.toString(), context,
+                        duration: Toast.LENGTH_LONG, gravity: Toast.BOTTOM);
                   }
                 },
               ),

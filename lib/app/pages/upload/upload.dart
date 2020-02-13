@@ -1,39 +1,18 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:path/path.dart';
 import 'package:async/async.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-import 'package:sm_ms/app/shared_module/client/client.dart';
+import 'package:sm_ms/app/shared_module/data/image_file.dart';
+import 'package:sm_ms/app/shared_module/service/images.service.dart';
 import 'package:sm_ms/app/shared_module/widgets/http_loading_dialog.dart';
 
+import '../../../main.dart';
 import '../../shared_module/pipes/image_size.dart';
 import '../../shared_module/widgets/http_loading_dialog.dart';
-
-enum ImageFileStaus {
-  normal,
-  error,
-  sucess,
-}
-
-class ImageFile {
-  final File image;
-  final int size;
-  String filename;
-  ImageFileStaus status = ImageFileStaus.normal;
-
-  bool get success => status == ImageFileStaus.sucess;
-  bool get error => status == ImageFileStaus.error;
-  bool get normal => status == ImageFileStaus.normal;
-
-  ImageFile(
-    this.image, {
-    this.size,
-    this.filename,
-  });
-}
 
 class Upload extends StatefulWidget {
   @override
@@ -41,9 +20,7 @@ class Upload extends StatefulWidget {
 }
 
 class _UploadState extends State<Upload> {
-  Set<ImageFile> _imageFiles = Set();
-  Set<ImageFile> get displayImageFiles =>
-      _imageFiles.where((element) => !element.success).toSet();
+  final imagesService = getIt<ImagesService>();
   TextEditingController _editNameController = TextEditingController();
   ScrollController controller = ScrollController();
 
@@ -56,34 +33,35 @@ class _UploadState extends State<Upload> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('上传'),
-        actions: <Widget>[
-          displayImageFiles.isNotEmpty
-              ? IconButton(
-                  icon: Icon(Icons.cloud_upload),
-                  onPressed: () => _updateAll(context),
-                )
-              : SizedBox(),
-        ],
-      ),
-      body: GridView.count(
-        controller: controller,
-        crossAxisCount: 2,
-        childAspectRatio: 0.7,
-        mainAxisSpacing: 4.0,
-        crossAxisSpacing: 4.0,
-        children: <Widget>[
-          for (var imageFile in displayImageFiles)
-            _imageItem(context, imageFile),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
-        onPressed: () {
-          _pickImage(context);
-        },
+    return Observer(
+      builder: (_) => Scaffold(
+        appBar: AppBar(
+          title: Text('上传'),
+          automaticallyImplyLeading: false,
+          actions: <Widget>[
+            imagesService.displayImageFiles.isNotEmpty
+                ? IconButton(
+                    icon: Icon(Icons.cloud_upload),
+                    onPressed: () => _updateAll(context),
+                  )
+                : SizedBox(),
+          ],
+        ),
+        body: GridView.count(
+          key: PageStorageKey('upload images'),
+          controller: controller,
+          crossAxisCount: 2,
+          childAspectRatio: 0.7,
+          mainAxisSpacing: 4.0,
+          crossAxisSpacing: 4.0,
+          children: imagesService.displayImageFiles
+              .map((e) => _imageItem(context, e))
+              .toList(),
+        ),
+        floatingActionButton: FloatingActionButton(
+          child: Icon(Icons.add),
+          onPressed: () => _pickImage(context),
+        ),
       ),
     );
   }
@@ -126,9 +104,7 @@ class _UploadState extends State<Upload> {
       },
     );
     if (newName != null) {
-      setState(() {
-        imageFile.filename = newName;
-      });
+      imageFile.setFilename(newName);
     }
   }
 
@@ -161,11 +137,7 @@ class _UploadState extends State<Upload> {
             children: <Widget>[
               FlatButton(
                 child: const Text('删除'),
-                onPressed: () async {
-                  setState(() {
-                    _imageFiles.remove(imageFile);
-                  });
-                },
+                onPressed: () => imagesService.remImageFile(imageFile),
               ),
               FlatButton(
                 child: const Text('修改'),
@@ -183,11 +155,13 @@ class _UploadState extends State<Upload> {
     File imageFile = await ImagePicker.pickImage(source: ImageSource.gallery);
     if (imageFile != null) {
       int size = await imageFile.length();
-      String filename = basename(imageFile.path);
-      setState(() {
-        _imageFiles.add(ImageFile(imageFile, size: size, filename: filename));
-      });
-      // _upload(context, imageFile);
+      imagesService.addImageFile(
+        ImageFile(
+          imageFile,
+          size: size,
+          filename: basename(imageFile.path),
+        ),
+      );
     }
   }
 
@@ -195,22 +169,18 @@ class _UploadState extends State<Upload> {
   _updateAll(BuildContext context) async {
     showHttpLoadingDialog(context, "All are uploading, please wait...");
 
-    final successAll = [];
-    for (var imageFile in _imageFiles) {
+    List<ImageFile> successAll = [];
+    for (var imageFile in imagesService.imageFiles) {
       try {
         await _upload(imageFile);
         successAll.add(imageFile);
-        setState(() {
-          imageFile.status = ImageFileStaus.sucess;
-        });
+        imageFile.setStatus(ImageFileStaus.sucess);
       } catch (e) {
-        setState(() {
-          imageFile.status = ImageFileStaus.error;
-        });
+        imageFile.setStatus(ImageFileStaus.error);
       }
     }
     Navigator.of(context).pop();
-    _imageFiles.removeWhere((element) => successAll.contains(element));
+    imagesService.remSuccessAll(successAll);
   }
 
   Future<void> _upload(ImageFile imageFile) async {
@@ -224,11 +194,11 @@ class _UploadState extends State<Upload> {
       imageFile.size,
       filename: imageFile.filename,
     );
-    var r = await client.postFile('upload', files: [multipartFile]);
-    if (r.statusCode == HttpStatus.ok && jsonDecode(r.body)["success"]) {
-      return "success";
-    } else {
-      return Future.error("uoload error!");
+    try {
+      return await imagesService.add(multipartFile);
+    } catch (e) {
+      print(e);
+      throw e;
     }
   }
 }

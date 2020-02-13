@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:sm_ms/store/main/main.store.dart';
 import 'package:toast/toast.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../main.dart';
 import '../../../app.router.dart';
+import '../../../shared_module/widgets/http_loading_dialog.dart';
+import '../../auth.service.dart';
 
 const String REGISTER_URL = 'https://sm.ms/register';
 
@@ -14,6 +16,7 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
+  final authService = getIt<AuthService>();
   TextEditingController _unameController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -51,12 +54,14 @@ class _LoginState extends State<Login> {
 
   Future<void> _login() async {
     if (isValidate) {
+      showHttpLoadingDialog(context, 'login...');
       try {
-        await mainStore.authService.login(_username, _password);
-        router.pushNamedAndRemoveUntil(
-            mainStore.authService.redirectUrl, (_) => false);
+        await authService.login(_username, _password);
+        Navigator.of(context).pop();
+        router.pushNamedAndRemoveUntil(authService.redirectUrl, (_) => false);
       } catch (e) {
         print(e);
+        Navigator.of(context).pop();
         Toast.show(
           e.toString(),
           context,

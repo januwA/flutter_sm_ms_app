@@ -22,13 +22,7 @@ List<AjanuwRoute> appRoutes = [
   ),
   AjanuwRoute(
     path: 'full-screen-image',
-    builder: (c, r) {
-      Map arg = r.arguments;
-      return FullScreenImage(
-        images: arg['images'],
-        index: arg['index'],
-      );
-    },
+    builder: (c, r) => FullScreenImage(index: r.arguments),
   ),
   AjanuwRoute(
     path: "not-found",

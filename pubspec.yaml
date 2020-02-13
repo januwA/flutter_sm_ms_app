@@ -26,6 +26,7 @@ dependencies:
   built_collection:
   toast: ^0.1.5
   url_launcher: ^5.2.3
+  get_it:
 
 dev_dependencies:
   flutter_test:
