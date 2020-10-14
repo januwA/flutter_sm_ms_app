@@ -1,7 +1,7 @@
 import 'package:mobx/mobx.dart';
 
 import '../../dto/userinfo/user_info_dto.dart';
-import '../client/client.dart';
+import '../client.dart';
 
 part 'userinfo.service.g.dart';
 

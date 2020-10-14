@@ -4,7 +4,7 @@ import 'package:toast/toast.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../main.dart';
-import '../../../app.router.dart';
+import '../../../pages/dash/dash.dart';
 import '../../../shared_module/widgets/http_loading_dialog.dart';
 import '../../auth.service.dart';
 
@@ -20,6 +20,9 @@ class _LoginState extends State<Login> {
   TextEditingController _unameController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  final _nameFocus =  FocusNode();
+  final _pwdFocus =  FocusNode();
 
   bool get isValidate {
     if (_formKey.currentState.validate()) {
@@ -49,6 +52,8 @@ class _LoginState extends State<Login> {
     _unameController?.dispose();
     _passwordController?.dispose();
     _formKey = null;
+    _nameFocus.dispose();
+    _pwdFocus.dispose();
     super.dispose();
   }
 
@@ -56,9 +61,11 @@ class _LoginState extends State<Login> {
     if (isValidate) {
       showHttpLoadingDialog(context, 'login...');
       try {
+        _nameFocus.unfocus();
+        _pwdFocus.unfocus();
         await authService.login(_username, _password);
         Navigator.of(context).pop();
-        router.pushNamedAndRemoveUntil(authService.redirectUrl, (_) => false);
+        Navigator.of(context).pushReplacement( MaterialPageRoute(builder: (_) => Dash()));
       } catch (e) {
         print(e);
         Navigator.of(context).pop();
@@ -93,12 +100,13 @@ class _LoginState extends State<Login> {
           padding: const EdgeInsets.all(24.0),
           child: Form(
             key: _formKey,
-            autovalidate: true,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
                 TextFormField(
+                  focusNode: _nameFocus,
                   controller: _unameController,
                   decoration: InputDecoration(labelText: "用户名/邮件地址"),
                   validator: (String v) {
@@ -106,6 +114,7 @@ class _LoginState extends State<Login> {
                   },
                 ),
                 TextFormField(
+                  focusNode: _pwdFocus,
                   controller: _passwordController,
                   obscureText: true,
                   decoration: InputDecoration(labelText: "密码"),

@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_imagenetwork/flutter_imagenetwork.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:mobx/mobx.dart';
-import 'package:sm_ms/app/app.router.dart';
 import 'package:sm_ms/app/dto/history_images/history_images.dto.dart';
 import 'package:sm_ms/app/shared_module/pipes/image_size.dart';
 import 'package:sm_ms/app/shared_module/service/images.service.dart';
@@ -11,6 +10,7 @@ import 'package:sm_ms/app/shared_module/widgets/delete_image_dialog.dart';
 import 'package:toast/toast.dart';
 
 import '../../../main.dart';
+import '../full_screen_image/full_screen_image.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -84,10 +84,10 @@ class _HomeState extends State<Home> {
           Expanded(
             child: GestureDetector(
               onTap: () {
-                router.navigator.pushNamed(
-                  '/full-screen-image',
-                  arguments: imagesService.images.indexOf(image),
-                );
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => FullScreenImage(
+                          index: imagesService.images.indexOf(image),
+                        )));
               },
               child: AjanuwImage(
                 image: AjanuwNetworkImage(image.url),

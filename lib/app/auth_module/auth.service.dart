@@ -1,61 +1,47 @@
 import 'dart:convert';
 
-import 'package:mobx/mobx.dart';
+import 'package:ajanuw_http/ajanuw_http.dart';
+import 'package:dart_printf/dart_printf.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sm_ms/app/app.router.dart';
 import 'package:sm_ms/app/auth_module/dto/login/login_dto.dart';
-import 'package:sm_ms/app/shared_module/client/client.dart';
+import 'package:sm_ms/app/shared_module/client.dart';
 
-import '../app.router.dart';
-
-part 'auth.service.g.dart';
+import 'pages/login/login.dart';
 
 const String TOKEN_KEY = 'token';
 
-class AuthService = _AuthService with _$AuthService;
-
-abstract class _AuthService with Store {
+class AuthService  {
   SharedPreferences prefs;
 
-  @observable
-  String _token = '';
-
-  _AuthService() {
+  AuthService() {
     _init();
   }
 
-  @action
   _init() async {
     Future.delayed(Duration.zero).then((_) async {
       prefs ??= await SharedPreferences.getInstance();
-      _token = await getToken();
-      logged = hasToken;
     });
   }
 
-  @observable
-  bool logged = false;
-
-  @observable
-  String redirectUrl = '/';
-
   /// 登陆成功，储存token，重定向到 /
-  @action
   Future<void> login(String username, String password) async {
     try {
       var r = await client.post(
         'token',
-        body: {
-          "username": username,
-          "password": password,
-        },
+        AjanuwHttpConfig(
+          body: {
+            "username": username,
+            "password": password,
+          },
+        ),
       );
       if (r.statusCode == 200) {
         final bodyMap = jsonDecode(r.body);
         if (bodyMap["success"]) {
           LoginDto body = LoginDto.fromJson(r.body);
           await setToken(body.data.token);
-          logged = true;
         } else {
           throw "Login Error: statusCode: ${r.statusCode} ${r.body}";
         }
@@ -68,36 +54,22 @@ abstract class _AuthService with Store {
   }
 
   /// 退出登陆，清理token, 重定向到/login
-  @action
-  Future<void> logout() async {
-    logged = false;
+  Future<void> logout(BuildContext context) async {
     await clearToken();
-    router.pushNamedAndRemoveUntil('/login', (_) => false);
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => Login()));
   }
 
-  @computed
-  bool get hasToken => _token.isNotEmpty;
-
-  @action
   Future<bool> setToken(String tk) async {
-    _token = tk;
-    return prefs.setString(TOKEN_KEY, _token);
+    printf('Set Token: %s', tk);
+    return prefs.setString(TOKEN_KEY, tk);
   }
 
-  @action
   Future<String> getToken() async {
     prefs ??= await SharedPreferences.getInstance();
-    _token = prefs.getString(TOKEN_KEY) ?? '';
-    return _token;
+    return prefs.getString(TOKEN_KEY) ?? '';
   }
 
-  @action
   Future<void> clearToken() async {
-    _token = '';
-    await prefs.setString(TOKEN_KEY, _token);
-  }
-
-  String getAuthorizationToken() {
-    return _token;
+    await prefs.setString(TOKEN_KEY, '');
   }
 }

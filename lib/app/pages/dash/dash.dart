@@ -41,15 +41,15 @@ class _DashState extends State<Dash> {
           BottomNavigationBarItem(
               icon: Icon(Icons.home),
               activeIcon: Icon(Icons.home),
-              title: Text("首页")),
+              label: "首页"),
           BottomNavigationBarItem(
               icon: Icon(Icons.file_upload),
               activeIcon: Icon(Icons.file_upload),
-              title: Text("上传")),
+              label: "上传"),
           BottomNavigationBarItem(
               icon: Icon(Icons.person),
               activeIcon: Icon(Icons.person),
-              title: Text("我的")),
+              label: "我的"),
         ],
       ),
     );

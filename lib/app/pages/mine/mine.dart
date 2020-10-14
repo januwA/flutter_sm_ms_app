@@ -51,7 +51,7 @@ class _MineState extends State<Mine> {
                     children: <Widget>[
                       FlatButton(
                         child: const Text('退出登录'),
-                        onPressed: authService.logout,
+                        onPressed: () => authService.logout(context),
                       ),
                     ],
                   ),

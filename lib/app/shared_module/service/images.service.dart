@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:ajanuw_http/ajanuw_http.dart';
 import 'package:mobx/mobx.dart';
-import 'package:http/http.dart' show MultipartFile;
 import 'package:sm_ms/app/shared_module/data/image_file.dart';
 import '../../dto/delete_image/delete_image_dto.dart';
 import '../../dto/history_images/history_images.dto.dart';
-import '../client/client.dart';
+import '../client.dart';
 
 part 'images.service.g.dart';
 
@@ -52,7 +52,10 @@ abstract class IimagesService with Store {
   @action
   Future<String> add(MultipartFile file) async {
     try {
-      var r = await client.postFile('upload', files: [file]);
+      var r = await client.post(
+        'upload',
+        AjanuwHttpConfig(files: [file]),
+      );
       if (r.statusCode == HttpStatus.ok) {
         Map body = jsonDecode(r.body);
         if (body["success"]) {
@@ -73,9 +76,8 @@ abstract class IimagesService with Store {
   /// 同步服务器删除图片
   @action
   Future<String> remove(DataDto image) async {
-    var url = Uri.parse('delete/${image.hash}');
     try {
-      var r = await client.get(url);
+      var r = await client.get('delete/${image.hash}');
       if (r.statusCode == HttpStatus.ok) {
         var body = DeleteImageDto.fromJson(r.body);
         if (body.success) {

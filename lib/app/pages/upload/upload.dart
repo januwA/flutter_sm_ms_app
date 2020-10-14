@@ -1,11 +1,10 @@
 import 'dart:io';
 
+import 'package:ajanuw_http/ajanuw_http.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:path/path.dart';
-import 'package:async/async.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
 import 'package:sm_ms/app/shared_module/data/image_file.dart';
 import 'package:sm_ms/app/shared_module/service/images.service.dart';
 import 'package:sm_ms/app/shared_module/widgets/http_loading_dialog.dart';
@@ -23,6 +22,7 @@ class _UploadState extends State<Upload> {
   final imagesService = getIt<ImagesService>();
   TextEditingController _editNameController = TextEditingController();
   ScrollController controller = ScrollController();
+  final picker = ImagePicker();
 
   @override
   void dispose() {
@@ -152,8 +152,9 @@ class _UploadState extends State<Upload> {
 
   /// 选择图片
   Future<void> _pickImage(BuildContext context) async {
-    File imageFile = await ImagePicker.pickImage(source: ImageSource.gallery);
-    if (imageFile != null) {
+    var pickedFile = await picker.getImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      var imageFile = File(pickedFile.path);
       int size = await imageFile.length();
       imagesService.addImageFile(
         ImageFile(
@@ -185,13 +186,9 @@ class _UploadState extends State<Upload> {
 
   Future<void> _upload(ImageFile imageFile) async {
     final image = imageFile.image;
-    var stream = http.ByteStream(
-      DelegatingStream.typed(image.openRead()),
-    );
-    var multipartFile = http.MultipartFile(
+    var multipartFile = await MultipartFile.fromPath(
       'smfile',
-      stream,
-      imageFile.size,
+      image.path,
       filename: imageFile.filename,
     );
     try {
